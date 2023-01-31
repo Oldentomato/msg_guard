@@ -3,15 +3,15 @@ import { SendAllData } from '../components/senddata'
 
 const styles = StyleSheet.create({
     button:{
-        width: 100,
+        width: 150,
         marginTop: 50,
         backgroundColor: '#000000',
         paddingTop: 50,
         paddingBottom: 50,
-        paddingLeft: 20,
+        paddingLeft: 35,
         borderWidth: 3,
         borderColor: '#fff',
-        borderRadius: 20
+        borderRadius: 20,
     },
 })
 
@@ -26,6 +26,8 @@ const AdminView = () => {
             </TouchableOpacity>
         </>
     )
+    
+
 }
 
 export default AdminView
