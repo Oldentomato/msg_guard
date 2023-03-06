@@ -62,3 +62,4 @@ buck-out/
 
 server
 src/components/vercel_url.js
+src/components/fly_url.js

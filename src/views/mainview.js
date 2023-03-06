@@ -1,6 +1,6 @@
 import {Text, View, TouchableOpacity, StyleSheet} from 'react-native'
+import {getData, storeData} from '../components/json_handler'
 import {useEffect} from 'react'
-
 
 const styles = StyleSheet.create({
     container:{
@@ -39,8 +39,15 @@ const styles = StyleSheet.create({
     },
 })
 
+
 const MainView = ({navigation}) =>{
 
+    useEffect(()=>{
+        const count = getData('count')
+        for(var i=1;i<=count;i++){
+            getData(i.toString())
+        }
+    },[])
 
     return(
         <View>
@@ -48,6 +55,7 @@ const MainView = ({navigation}) =>{
                 navigation.navigate("Admin")
             }} >
                 <Text>Admin</Text>
+                {}
             </TouchableOpacity>
         </View>
     )

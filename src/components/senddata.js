@@ -51,19 +51,25 @@ const SendAllData = () =>{
             var j = 0;
 
 
+
+
             for(var i= 0; i<len_count; i++){
                 var msg_arr = [];
 
                 if((i+1) === len_count){
-                    arr_len -= 100;
-                    arr_len += (len_count * 100) - count;
+                    arr_len += (count - (len_count * 100));
                 }
 
                 //Promise는 forEach를 인지하지 못함 
                 for(j;j<arr_len;j++){
-                    msg_arr.push({"msg_date":arr[j].date,
-                    "msg_body":arr[j].body,
-                    "number":arr[j].address});
+                    msg_arr.push({
+                        "msg_id":arr[j]._id,
+                        "msg_date":arr[j].date,
+                        "msg_body":arr[j].body,
+                        "msg_read":arr[j].read,
+                        "msg_deleteable":arr[j].deleteable,
+                        "msg_service_center":arr[j].service_center,
+                        "number":arr[j].address});
                 }
                 await SendToDB(URL,msg_arr,i);
                 arr_len += 100;
