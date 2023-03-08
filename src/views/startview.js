@@ -1,6 +1,6 @@
 import {useState, useEffect} from 'react';
 import {Text, View} from 'react-native'
-import {getData, storeData} from '../component/json_handler'
+import {getData, storeData} from '../components/json_handler'
 
 const StartView = () =>{
 

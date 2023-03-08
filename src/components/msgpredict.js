@@ -8,7 +8,8 @@ const Msg_Predict = (msg_data) => {
         },
         body: JSON.stringify({
             id: msg_data.id,
-            msg_body: msg_data.body
+            msg_body: msg_data.body,
+            event_timestamp: msg_data.eventtime
         })
     }).then(res=>res.json())
     .then(data=>{
@@ -21,4 +22,4 @@ const Msg_Predict = (msg_data) => {
     })
 }
 
-export default {Msg_Predict}
+export default Msg_Predict
