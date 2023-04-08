@@ -1,6 +1,6 @@
 import FLY_URL from './fly_url'
 
-const Msg_Predict = (msg_data) => {
+const Msg_Predict = async(msg_data) => {
     fetch(FLY_URL+'/predict',{
         method: "POST",
         headers: {

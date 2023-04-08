@@ -3,7 +3,6 @@ import {getData} from '../components/json_handler'
 import {useEffect, useRef} from 'react'
 import {AppState} from 'react-native'
 import SmsListener from "react-native-android-sms-listener";
-import SmsAndroid from 'react-native-get-sms-android'
 import { PermissionsAndroid } from 'react-native';
 import Msg_Predict from '../components/msgpredict'
 
@@ -50,6 +49,9 @@ const styles = StyleSheet.create({
     },
 })
 
+const EVENT_SMS_RECEIVED = "android.provider.Telephony.SMS_RECEIVED";
+const EVENT_MMS_RECEIVED = "com.samsung.android.chatplus.MMS_RECEIVED";
+
 async function requestReadSmsPermission(){
     try {
         var granted = await PermissionsAndroid.request(
@@ -67,15 +69,24 @@ async function requestReadSmsPermission(){
               message: 'Need access to receive sms, to verify OTP'
             }
           );
+          
           if (granted === PermissionsAndroid.RESULTS.GRANTED) {
             alert('RECEIVE_SMS permissions granted', granted);
             console.log('RECEIVE_SMS permissions granted', granted);
-            // SmsListener.addListener(message => {
-            //   alert(message);
-            //   console.log(message);
-            //   //message.body will have the message.
-            //   //message.originatingAddress will be the address.
-            // });
+            granted = await PermissionsAndroid.request(
+                PermissionsAndroid.PERMISSIONS.RECEIVE_MMS, {
+                    title: 'Receive MMS',
+                    message: 'Need access to receive mms, to verify OTP'
+                }
+            );
+            if (granted === PermissionsAndroid.RESULTS.GRANTED) {
+                alert('RECEIVE_MMS permissions granted', granted);
+                console.log('RECEIVE_MMS permissions granted', granted);
+            }
+            else{
+                alert('RECEIVE_MMS permissions denied');
+                console.log('RECEIVE_MMS permissions denied');
+            }
           } else {
             alert('RECEIVE_SMS permissions denied');
             console.log('RECEIVE_SMS permissions denied');
@@ -105,40 +116,53 @@ const MainView = ({navigation}) =>{
         appState.current = nextAppState;
     }
 
+    const handleSmsReceived = (event) => {
+        const smsData = event.body;
+        console.log(`Received SMS: ${smsData}`)
+
+    }
+
+    const handleMmsReceived = (event) => {
+        const mmsData = event.body;
+        console.log(`Received SMS: ${mmsData}`)
+    }
+
     useEffect(()=>{
         requestReadSmsPermission()
         const backgroundlis = AppState.addEventListener('change',handleAppStateChange);
         let listener = SmsListener.addListener((msg)=>{
             console.log(msg)
             const msg_data = {
-                id: msg.originatingAddress,
+                id: msg.sms_id,
                 body: msg.body,
                 eventtime: msg.timestamp
             }
             
-            const result = Msg_Predict(msg_data)
-            if(result == -1){
-                console.log("Error")
-            }
-            else{
-                if(result == 1){ //스팸
-                    storeData(getData('count')+1, msg_data)
-                    SmsAndroid.delete(
-                        msg._id,
-                        (fail)=>{
-                            console.log('Failed with this error: '+fail);
-                        },
-                        (success)=>{
-                            console.log('SMS deleted successfully');
-                        }
-                    )
-                } 
-            }
+            Msg_Predict(msg_data).then((result)=>{
+                if(result == -1){
+                    console.log("Error")
+                }
+                else{
+                    if(result == 1){ //스팸
+                        // storeData(getData('count')+1, msg_data)
+                        SmsAndroid.delete(
+                            msg.sms_id, 
+                            (fail)=>{
+                                console.log('Failed with this error: '+fail);
+                            },
+                            (success)=>{
+                                console.log('SMS deleted successfully');
+                            }
+                        )
+                    } 
+                }
+            })
+
         })
-        const count = getData('count')
-        for(var i=1;i<=count;i++){
-            getData(i.toString())
-        }
+        // const count = getData('count')
+        // for(var i=1;i<=count;i++){
+        //     getData(i.toString())
+        // }
 
         return () =>{
             backgroundlis.remove();
@@ -149,7 +173,7 @@ const MainView = ({navigation}) =>{
 
     return(
         <View>
-            <Text style={styles.versionfont}>0.3</Text>
+            <Text style={styles.versionfont}>0.7</Text>
             <TouchableOpacity style={styles.button} onPress={()=>{
                 navigation.navigate("Admin")
             }} >
