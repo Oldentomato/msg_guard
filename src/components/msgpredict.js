@@ -1,6 +1,6 @@
 import FLY_URL from './fly_url'
 
-const Msg_Predict = async(msg_data) => {
+const Msg_Predict = (msg_data) => {
     fetch(FLY_URL+'/predict',{
         method: "POST",
         headers: {
@@ -13,7 +13,7 @@ const Msg_Predict = async(msg_data) => {
         })
     }).then(res=>res.json())
     .then(data=>{
-        if(data.success){
+        if(data.success === "True"){
             return data.spam
         }
         else{

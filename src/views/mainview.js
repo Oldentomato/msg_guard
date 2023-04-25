@@ -1,11 +1,11 @@
-import {Text, View, TouchableOpacity, StyleSheet} from 'react-native'
+import {Text, View, TouchableOpacity, StyleSheet, Linking,Alert} from 'react-native'
 import {getData} from '../components/json_handler'
-import {useEffect, useRef} from 'react'
+import {useEffect, useRef, useState} from 'react'
 import {AppState} from 'react-native'
 import SmsListener from "react-native-android-sms-listener";
 import { PermissionsAndroid } from 'react-native';
-import Msg_Predict from '../components/msgpredict'
-
+import FLY_URL from '../components/fly_url'
+import SmsAndroid from 'react-native-get-sms-android';
 
 const styles = StyleSheet.create({
     container:{
@@ -49,8 +49,6 @@ const styles = StyleSheet.create({
     },
 })
 
-const EVENT_SMS_RECEIVED = "android.provider.Telephony.SMS_RECEIVED";
-const EVENT_MMS_RECEIVED = "com.samsung.android.chatplus.MMS_RECEIVED";
 
 async function requestReadSmsPermission(){
     try {
@@ -61,7 +59,7 @@ async function requestReadSmsPermission(){
           }
         );
         if (granted === PermissionsAndroid.RESULTS.GRANTED) {
-          alert('READ_SMS permissions granted', granted);
+        //   alert('READ_SMS permissions granted', granted);
           console.log('READ_SMS permissions granted', granted);
           granted = await PermissionsAndroid.request(
             PermissionsAndroid.PERMISSIONS.RECEIVE_SMS, {
@@ -71,7 +69,7 @@ async function requestReadSmsPermission(){
           );
           
           if (granted === PermissionsAndroid.RESULTS.GRANTED) {
-            alert('RECEIVE_SMS permissions granted', granted);
+            // alert('RECEIVE_SMS permissions granted', granted);
             console.log('RECEIVE_SMS permissions granted', granted);
             granted = await PermissionsAndroid.request(
                 PermissionsAndroid.PERMISSIONS.RECEIVE_MMS, {
@@ -80,7 +78,7 @@ async function requestReadSmsPermission(){
                 }
             );
             if (granted === PermissionsAndroid.RESULTS.GRANTED) {
-                alert('RECEIVE_MMS permissions granted', granted);
+                // alert('RECEIVE_MMS permissions granted', granted);
                 console.log('RECEIVE_MMS permissions granted', granted);
             }
             else{
@@ -101,6 +99,8 @@ async function requestReadSmsPermission(){
 }
 
 
+
+
 const MainView = ({navigation}) =>{
 
     const appState = useRef(AppState.currentState);
@@ -115,38 +115,39 @@ const MainView = ({navigation}) =>{
         }
         appState.current = nextAppState;
     }
+    
 
-    const handleSmsReceived = (event) => {
-        const smsData = event.body;
-        console.log(`Received SMS: ${smsData}`)
-
-    }
-
-    const handleMmsReceived = (event) => {
-        const mmsData = event.body;
-        console.log(`Received SMS: ${mmsData}`)
-    }
+    
 
     useEffect(()=>{
         requestReadSmsPermission()
         const backgroundlis = AppState.addEventListener('change',handleAppStateChange);
-        let listener = SmsListener.addListener((msg)=>{
+        let listener = SmsListener.addListener(async(msg)=>{
             console.log(msg)
             const msg_data = {
-                id: msg.sms_id,
+                id: msg.msg_id,
                 body: msg.body,
                 eventtime: msg.timestamp
             }
-            
-            Msg_Predict(msg_data).then((result)=>{
-                if(result == -1){
-                    console.log("Error")
-                }
-                else{
-                    if(result == 1){ //스팸
+
+            await fetch(FLY_URL+'/predict',{
+                method: "POST",
+                headers: {
+                    "Content-Type" : "application/json"
+                },
+                body: JSON.stringify({
+                    id: msg_data.id,
+                    msg_body: msg_data.body,
+                    event_timestamp: msg_data.eventtime
+                })
+            }).then(res=>res.json())
+            .then(data=>{
+                if(data.success === "True"){
+                    if(data.spam === 0){ //스팸
+                        console.log(msg.msg_id)
                         // storeData(getData('count')+1, msg_data)
                         SmsAndroid.delete(
-                            msg.sms_id, 
+                            msg.msg_id, 
                             (fail)=>{
                                 console.log('Failed with this error: '+fail);
                             },
@@ -156,7 +157,12 @@ const MainView = ({navigation}) =>{
                         )
                     } 
                 }
+                else{
+                    console.log("Error")
+                }
             })
+
+
 
         })
         // const count = getData('count')
@@ -170,6 +176,7 @@ const MainView = ({navigation}) =>{
         };
         
     },[])
+
 
     return(
         <View>
